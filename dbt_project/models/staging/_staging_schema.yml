@@ -1,0 +1,64 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: "Staging orders: renamed columns from STG_ORDERS source."
+    columns:
+      - name: order_id
+        description: "Unique order identifier."
+        tests: [unique, not_null]
+      - name: customer_id
+        description: "FK to customer."
+        tests: [not_null]
+      - name: order_status
+        description: "Order status string."
+      - name: purchased_at
+        description: "Timestamp when order was placed."
+      - name: delivery_days
+        description: "Days from purchase to delivery."
+      - name: is_late
+        description: "True if delivered after estimated date."
+
+  - name: stg_customers
+    description: "Staging customers: renamed and city-cleaned."
+    columns:
+      - name: customer_id
+        tests: [unique, not_null]
+      - name: customer_unique_id
+        tests: [not_null]
+      - name: customer_state
+        description: "Two-letter Brazilian state code."
+
+  - name: stg_products
+    description: "Staging products: renamed columns with volume_cm3 computed in Silver."
+    columns:
+      - name: product_id
+        tests: [unique, not_null]
+
+  - name: stg_sellers
+    description: "Staging sellers: renamed and city-cleaned."
+    columns:
+      - name: seller_id
+        tests: [unique, not_null]
+
+  - name: stg_payments
+    description: "Staging payments: one row per order (aggregated in Silver)."
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: payment_amount
+        description: "Total payment for the order in BRL."
+        tests: [not_null]
+
+  - name: stg_reviews
+    description: "Staging reviews: one review per order (latest)."
+    columns:
+      - name: review_id
+        tests: [unique, not_null]
+      - name: order_id
+        tests: [unique, not_null]
+      - name: review_score
+        description: "Customer satisfaction score 1-5."
+        tests:
+          - accepted_values:
+              values: [1, 2, 3, 4, 5]

@@ -1,0 +1,107 @@
+version: 2
+
+models:
+  - name: fact_orders
+    description: "Central fact table — one row per order. Grain: order_id."
+    columns:
+      - name: order_key
+        description: "Surrogate key (MD5 hash of order_id)."
+        tests: [unique, not_null]
+      - name: order_id
+        description: "Natural key from source."
+        tests: [unique, not_null]
+      - name: customer_key
+        description: "FK to dim_customers."
+        tests: [not_null]
+      - name: date_key
+        description: "FK to dim_dates (integer YYYYMMDD)."
+        tests: [not_null]
+      - name: payment_amount
+        description: "Total payment value for the order in BRL."
+        tests: [not_null]
+      - name: order_status
+        description: "Current order status."
+        tests:
+          - accepted_values:
+              values: ['delivered', 'shipped', 'canceled', 'invoiced', 'processing', 'approved']
+      - name: delivery_days
+        description: "Calendar days from purchase to delivery (null if not yet delivered)."
+      - name: is_late
+        description: "True if delivered after estimated delivery date."
+      - name: delivery_delay_days
+        description: "Days late (0 if on time or not yet delivered)."
+      - name: review_score
+        description: "Customer review score 1–5 (null if no review)."
+
+  - name: dim_customers
+    description: "Customer dimension — one row per customer_id (order-level customer)."
+    columns:
+      - name: customer_key
+        description: "Surrogate key."
+        tests: [unique, not_null]
+      - name: customer_id
+        description: "Natural key — one customer record per order in source."
+        tests: [unique, not_null]
+      - name: customer_unique_id
+        description: "The actual unique customer identifier (one person may have many customer_ids)."
+        tests: [not_null]
+      - name: customer_city
+        description: "Lowercase city name."
+      - name: customer_state
+        description: "Two-letter Brazilian state code."
+      - name: customer_region
+        description: "Brazilian macro-region (Southeast, South, Northeast, North, Central-West)."
+        tests:
+          - accepted_values:
+              values: ['Southeast', 'South', 'Northeast', 'North', 'Central-West', 'Unknown']
+
+  - name: dim_sellers
+    description: "Seller dimension."
+    columns:
+      - name: seller_key
+        description: "Surrogate key."
+        tests: [unique, not_null]
+      - name: seller_id
+        description: "Natural key."
+        tests: [unique, not_null]
+      - name: seller_state
+        description: "Two-letter state code."
+      - name: seller_region
+        description: "Brazilian macro-region."
+
+  - name: dim_products
+    description: "Product dimension with physical attributes."
+    columns:
+      - name: product_key
+        description: "Surrogate key."
+        tests: [unique, not_null]
+      - name: product_id
+        description: "Natural key."
+        tests: [unique, not_null]
+      - name: product_category
+        description: "Product category (Portuguese — use translation table for English)."
+      - name: volume_cm3
+        description: "Product volume: length × height × width in cm³."
+
+  - name: dim_dates
+    description: "Date dimension spine 2016-01-01 to 2018-12-31."
+    columns:
+      - name: date_key
+        description: "Integer YYYYMMDD surrogate key."
+        tests: [unique, not_null]
+      - name: full_date
+        description: "Calendar date."
+        tests: [unique, not_null]
+      - name: is_weekend
+        description: "True for Saturday and Sunday."
+
+  - name: dim_payment
+    description: "Payment method dimension with installment buckets."
+    columns:
+      - name: payment_key
+        description: "Surrogate key (payment_type + installments)."
+        tests: [unique, not_null]
+      - name: payment_type
+        description: "Payment method: credit_card, boleto, voucher, debit_card."
+      - name: installments_bucket
+        description: "Grouped installment count: 1 (cash), 2-3, 4-6, 7-12, 12+."

@@ -1,0 +1,30 @@
+# profiles.yml — dbt connection profiles
+# Place this file at ~/.dbt/profiles.yml OR set DBT_PROFILES_DIR to point here.
+#
+# Usage:
+#   export DBT_PROFILES_DIR=/path/to/dbt_project
+#   dbt run
+#
+# Or copy to ~/.dbt/profiles.yml
+
+ecommerce_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'ECOMMERCE_DB') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'COMPUTE_WH') }}"
+      schema: "{{ env_var('SNOWFLAKE_SCHEMA', 'PUBLIC') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', '') }}"
+      threads: 4
+      client_session_keep_alive: False
+
+    # Alternative: run dbt against a local DuckDB (no Snowflake needed)
+    # Install: pip install dbt-duckdb
+    # local:
+    #   type: duckdb
+    #   path: ../data/gold/ecommerce.duckdb
+    #   threads: 4

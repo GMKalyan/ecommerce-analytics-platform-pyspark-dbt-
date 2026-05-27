@@ -1,0 +1,58 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Staging tables loaded from Silver Parquet layer via Snowflake loader."
+    database: "{{ env_var('SNOWFLAKE_DATABASE', 'ECOMMERCE_DB') }}"
+    schema: "{{ env_var('SNOWFLAKE_SCHEMA', 'PUBLIC') }}"
+    tables:
+      - name: STG_ORDERS
+        description: "Orders with delivery timestamps and derived date features."
+        columns:
+          - name: ORDER_ID
+            description: "Unique order identifier."
+            tests: [unique, not_null]
+          - name: CUSTOMER_ID
+            description: "Foreign key to customer."
+            tests: [not_null]
+          - name: ORDER_STATUS
+            description: "Status of the order."
+            tests:
+              - accepted_values:
+                  values: ['delivered', 'shipped', 'canceled', 'invoiced', 'processing', 'approved', 'unavailable', 'created']
+
+      - name: STG_CUSTOMERS
+        description: "Customer records deduplicated and city-cleaned."
+        columns:
+          - name: CUSTOMER_ID
+            tests: [unique, not_null]
+          - name: CUSTOMER_UNIQUE_ID
+            tests: [not_null]
+
+      - name: STG_PRODUCTS
+        description: "Product attributes including volume and category."
+        columns:
+          - name: PRODUCT_ID
+            tests: [unique, not_null]
+
+      - name: STG_SELLERS
+        description: "Seller records with cleaned city names."
+        columns:
+          - name: SELLER_ID
+            tests: [unique, not_null]
+
+      - name: STG_PAYMENTS
+        description: "Aggregated payment data per order."
+        columns:
+          - name: ORDER_ID
+            tests: [unique, not_null]
+          - name: TOTAL_PAYMENT
+            tests: [not_null]
+
+      - name: STG_REVIEWS
+        description: "One review per order (latest), comments filled."
+        columns:
+          - name: REVIEW_ID
+            tests: [unique, not_null]
+          - name: ORDER_ID
+            tests: [unique, not_null]

@@ -1,0 +1,111 @@
+# =============================================================================
+# docker-compose.yml — Airflow for the E-Commerce Analytics Platform
+#
+# QUICK START:
+#   1. Create the .env file (copy from .env.example and fill in Snowflake creds)
+#   2. docker-compose up -d
+#   3. Open http://localhost:8080 (user: admin / pass: admin)
+#   4. Enable the "ecommerce_pipeline" DAG and trigger a run
+#
+# STOP:
+#   docker-compose down
+#
+# RUNNING WITHOUT DOCKER:
+#   python run_pipeline.py          # runs full pipeline sequentially
+#   See run_pipeline.py for details.
+# =============================================================================
+
+version: '3.8'
+
+x-airflow-common: &airflow-common
+  image: apache/airflow:2.9.1-python3.11
+  environment:
+    # Core settings
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__FERNET_KEY: ''
+
+    # Database: use PostgreSQL for LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+
+    # Snowflake credentials passed through
+    SNOWFLAKE_ACCOUNT: "${SNOWFLAKE_ACCOUNT}"
+    SNOWFLAKE_USER: "${SNOWFLAKE_USER}"
+    SNOWFLAKE_PASSWORD: "${SNOWFLAKE_PASSWORD}"
+    SNOWFLAKE_DATABASE: "${SNOWFLAKE_DATABASE:-ECOMMERCE_DB}"
+    SNOWFLAKE_SCHEMA: "${SNOWFLAKE_SCHEMA:-PUBLIC}"
+    SNOWFLAKE_WAREHOUSE: "${SNOWFLAKE_WAREHOUSE:-COMPUTE_WH}"
+
+    # Java (for PySpark in Airflow tasks)
+    JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./src:/opt/airflow/src
+    - ./dbt_project:/opt/airflow/dbt_project
+    - ./data:/opt/airflow/data
+    - ./logs:/opt/airflow/logs
+    - airflow_plugins:/opt/airflow/plugins
+
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+
+  # ── Postgres metadata DB ──────────────────────────────────────────────────
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Airflow DB init ───────────────────────────────────────────────────────
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate
+        airflow users create \
+          --username admin \
+          --password admin \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@example.com
+        echo "Airflow initialized successfully."
+    restart: on-failure
+
+  # ── Airflow Webserver ─────────────────────────────────────────────────────
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Airflow Scheduler ─────────────────────────────────────────────────────
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  airflow_plugins:
