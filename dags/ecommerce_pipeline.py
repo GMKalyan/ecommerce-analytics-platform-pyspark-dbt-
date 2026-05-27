@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import time
 from datetime import datetime, timedelta
 
 from airflow import DAG
@@ -33,7 +32,7 @@ DEFAULT_ARGS = {
 
 
 def _download(**context) -> str:
-    import src.config
+    import src.config  # noqa: F401 — sets JAVA_HOME/HADOOP_HOME as side effect
     from src.ingestion.download import ingest_to_bronze
     folder = ingest_to_bronze()
     context["ti"].xcom_push(key="bronze_folder", value=str(folder))
@@ -41,7 +40,7 @@ def _download(**context) -> str:
 
 
 def _validate(**context) -> None:
-    import src.config
+    import src.config  # noqa: F401 — sets JAVA_HOME/HADOOP_HOME as side effect
     from pathlib import Path
     from src.ingestion.validate import validate_bronze
 
@@ -57,7 +56,7 @@ def _validate(**context) -> None:
 
 def _make_spark_transform(transform_fn_path: str):
     def _transform(**context):
-        import src.config
+        import src.config  # noqa: F401 — sets JAVA_HOME/HADOOP_HOME as side effect
         import importlib
         from pathlib import Path
 
@@ -83,7 +82,7 @@ def _make_spark_transform(transform_fn_path: str):
 
 
 def _load_snowflake(**context) -> None:
-    import src.config
+    import src.config  # noqa: F401 — sets JAVA_HOME/HADOOP_HOME as side effect
     from src.loading.snowflake_loader import load_all_silver_tables
     results = load_all_silver_tables()
     failed = {k: v for k, v in results.items() if v < 0}
@@ -93,7 +92,7 @@ def _load_snowflake(**context) -> None:
 
 
 def _train_models(**context) -> None:
-    import src.config
+    import src.config  # noqa: F401 — sets JAVA_HOME/HADOOP_HOME as side effect
     from src.ml.train import main as train_main
     train_main()
 
@@ -112,7 +111,7 @@ with DAG(
     dag_id="ecommerce_pipeline",
     description="Brazilian E-Commerce analytics: ingest -> transform -> load -> model -> ML",
     default_args=DEFAULT_ARGS,
-    schedule_interval="@daily",
+    schedule="@daily",
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=["ecommerce", "analytics", "pyspark", "snowflake", "dbt"],
