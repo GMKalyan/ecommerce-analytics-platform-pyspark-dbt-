@@ -24,10 +24,9 @@ env/
 venv/
 ENV/
 
-# Data files (don't commit raw data)
+# Data files
 data/bronze/
-data/silver/
-data/gold/
+data/gold/models/*.joblib
 archive/
 
 # Spark

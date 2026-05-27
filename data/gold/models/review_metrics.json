@@ -1,0 +1,56 @@
+{
+  "best_model": "GradientBoostingClassifier",
+  "all_models": {
+    "LogisticRegression": {
+      "accuracy": 0.8044,
+      "precision": 0.8114,
+      "recall": 0.9742,
+      "f1": 0.8854
+    },
+    "RandomForestClassifier": {
+      "accuracy": 0.7977,
+      "precision": 0.8149,
+      "recall": 0.9565,
+      "f1": 0.88
+    },
+    "GradientBoostingClassifier": {
+      "accuracy": 0.8096,
+      "precision": 0.8099,
+      "recall": 0.986,
+      "f1": 0.8893
+    }
+  },
+  "best_metrics": {
+    "accuracy": 0.8096,
+    "precision": 0.8099,
+    "recall": 0.986,
+    "f1": 0.8893
+  },
+  "confusion_matrix": [
+    [
+      876,
+      3503
+    ],
+    [
+      212,
+      14924
+    ]
+  ],
+  "class_labels": [
+    "bad (< 4)",
+    "good (>= 4)"
+  ],
+  "train_samples": 78059,
+  "test_samples": 19515,
+  "target": "is_good_review",
+  "features": [
+    "delivery_days",
+    "delivery_delay_days",
+    "price",
+    "freight_value",
+    "product_weight_g",
+    "product_photos_qty",
+    "num_installments",
+    "is_late_int"
+  ]
+}

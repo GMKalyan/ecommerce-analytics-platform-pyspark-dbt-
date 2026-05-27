@@ -1,0 +1,40 @@
+{
+  "best_model": "GradientBoostingRegressor",
+  "all_models": {
+    "LinearRegression": {
+      "MAE": 5.859,
+      "RMSE": 8.993,
+      "R2": 0.1149
+    },
+    "RandomForestRegressor": {
+      "MAE": 5.104,
+      "RMSE": 8.304,
+      "R2": 0.2453
+    },
+    "GradientBoostingRegressor": {
+      "MAE": 5.048,
+      "RMSE": 8.119,
+      "R2": 0.2785
+    }
+  },
+  "best_metrics": {
+    "MAE": 5.048,
+    "RMSE": 8.119,
+    "R2": 0.2785
+  },
+  "train_samples": 77176,
+  "test_samples": 19294,
+  "target": "delivery_days",
+  "features": [
+    "seller_state",
+    "customer_state",
+    "product_weight_g",
+    "product_volume_cm3",
+    "freight_value",
+    "price",
+    "primary_payment_type",
+    "order_day_of_week",
+    "order_month",
+    "num_installments"
+  ]
+}
