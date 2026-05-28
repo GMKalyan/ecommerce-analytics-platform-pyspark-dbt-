@@ -150,9 +150,11 @@ def predict_review_score(features: dict[str, Any]) -> dict:
     features : dict
         Keys matching CLF_FEATURES from train.py. Missing keys get defaults.
         Expected keys:
-          delivery_days, delivery_delay_days, price, freight_value,
-          product_weight_g, product_photos_qty, num_installments,
-          is_late_int (0 or 1)
+          delivery_days, delivery_delay_days, is_late_int,
+          price, freight_value, freight_ratio, item_count,
+          product_weight_g, product_photos_qty, product_category,
+          num_installments, seller_avg_review,
+          comment_length, has_comment, distance_km
 
     Returns
     -------
@@ -162,13 +164,16 @@ def predict_review_score(features: dict[str, Any]) -> dict:
         label            : str   — "good (>= 4)" or "bad (< 4)"
     """
     art = _load_review()
-    model      = art["model"]
-    imputer    = art["imputer"]
-    feat_names = art["features"]
+    model        = art["model"]
+    encoders     = art.get("encoders", {})
+    imputer      = art["imputer"]
+    feat_names   = art["features"]
+    categoricals = art.get("categoricals", [])
 
     row = _build_feature_row(features, feat_names)
+    row = _encode_categoricals(row, feat_names, categoricals, encoders)
 
-    X = np.array(row, dtype=float).reshape(1, -1)
+    X = np.array(row, dtype=object).reshape(1, -1)
     X_imputed = imputer.transform(X)
 
     pred_class = int(model.predict(X_imputed)[0])
@@ -213,12 +218,19 @@ if __name__ == "__main__":
     sample_review = {
         "delivery_days":       days,
         "delivery_delay_days": 0.0,
+        "is_late_int":         0,
         "price":               89.90,
         "freight_value":       15.0,
+        "freight_ratio":       15.0 / (89.90 + 15.0),
+        "item_count":          1,
         "product_weight_g":    500,
         "product_photos_qty":  3,
+        "product_category":    "other",
         "num_installments":    3,
-        "is_late_int":         0,
+        "seller_avg_review":   np.nan,
+        "comment_length":      0,
+        "has_comment":         0,
+        "distance_km":         np.nan,
     }
     result = predict_review_score(sample_review)
     print(f"Predicted review:       {result['label']}  (p_good={result['probability_good']:.3f})")

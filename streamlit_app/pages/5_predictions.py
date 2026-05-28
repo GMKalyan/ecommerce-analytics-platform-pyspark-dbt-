@@ -16,6 +16,15 @@ from streamlit_app.utils.data_loader import (
 from streamlit_app.utils.charts import feature_importance_chart, confusion_matrix_heatmap
 from streamlit_app.utils.constants import STATE_NAMES, PAYMENT_TYPES
 
+PRODUCT_CATEGORIES = [
+    "other", "cama_mesa_banho", "beleza_saude", "esporte_lazer",
+    "informatica_acessorios", "moveis_decoracao", "utilidades_domesticas",
+    "relogios_presentes", "telefonia", "ferramentas_jardim",
+    "automotivo", "brinquedos", "cool_stuff", "perfumaria",
+    "eletrodomesticos", "bebes", "fashion_bolsas_e_acessorios",
+    "papelaria", "livros_tecnicos_e_manuais", "construcao_ferramentas_seguranca",
+]
+
 st.set_page_config(page_title="Predictions", page_icon="🤖", layout="wide")
 st.title("🤖 ML Predictions")
 
@@ -124,14 +133,16 @@ with st.form("predictor_form"):
     c1, c2, c3 = st.columns(3)
 
     with c1:
-        seller_state  = st.selectbox("Seller State",   states, index=states.index("SP"))
-        customer_state= st.selectbox("Customer State", states, index=states.index("RJ"))
-        payment_type  = st.selectbox("Payment Type",   PAYMENT_TYPES)
+        seller_state   = st.selectbox("Seller State",   states, index=states.index("SP"))
+        customer_state = st.selectbox("Customer State", states, index=states.index("RJ"))
+        payment_type   = st.selectbox("Payment Type",   PAYMENT_TYPES)
+        product_cat    = st.selectbox("Product Category", PRODUCT_CATEGORIES)
 
     with c2:
         price         = st.number_input("Product Price (BRL)", min_value=1.0, value=89.90, step=10.0)
         freight       = st.number_input("Freight Value (BRL)", min_value=0.0, value=15.0, step=1.0)
         installments  = st.slider("Num Installments", 1, 24, 3)
+        item_count    = st.slider("Items in Order", 1, 10, 1)
 
     with c3:
         weight_g      = st.number_input("Product Weight (g)", min_value=0, value=500, step=100)
@@ -154,31 +165,45 @@ if submitted:
     try:
         from src.ml.predict import predict_delivery_time, predict_review_score
 
+        import numpy as _np
+        freight_ratio = freight / (price + freight) if (price + freight) > 0 else 0.0
+
         delivery_features = {
             "seller_state":         seller_state,
             "customer_state":       customer_state,
+            "distance_km":          _np.nan,
             "product_weight_g":     weight_g,
             "product_volume_cm3":   volume_cm3,
+            "product_category":     product_cat,
             "freight_value":        freight,
             "price":                price,
+            "freight_ratio":        freight_ratio,
+            "item_count":           item_count,
             "primary_payment_type": payment_type,
+            "num_installments":     installments,
             "order_day_of_week":    day_of_week,
             "order_month":          month,
-            "num_installments":     installments,
+            "seller_avg_delivery":  _np.nan,
         }
 
         predicted_days = predict_delivery_time(delivery_features)
-        is_late_int    = 0  # baseline: assume on time
 
         review_features = {
             "delivery_days":       predicted_days,
             "delivery_delay_days": 0.0,
+            "is_late_int":         0,
             "price":               price,
             "freight_value":       freight,
+            "freight_ratio":       freight_ratio,
+            "item_count":          item_count,
             "product_weight_g":    weight_g,
             "product_photos_qty":  photos_qty,
+            "product_category":    product_cat,
             "num_installments":    installments,
-            "is_late_int":         is_late_int,
+            "seller_avg_review":   _np.nan,
+            "comment_length":      0,
+            "has_comment":         0,
+            "distance_km":         _np.nan,
         }
 
         review_result = predict_review_score(review_features)

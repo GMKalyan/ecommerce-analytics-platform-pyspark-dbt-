@@ -1,26 +1,31 @@
 {
-  "best_model": "GradientBoostingRegressor",
+  "best_model": "XGBRegressor",
   "all_models": {
     "LinearRegression": {
-      "MAE": 5.859,
-      "RMSE": 8.993,
-      "R2": 0.1149
+      "MAE": 5.623,
+      "RMSE": 8.788,
+      "R2": 0.146
     },
     "RandomForestRegressor": {
-      "MAE": 5.104,
-      "RMSE": 8.304,
-      "R2": 0.2453
+      "MAE": 4.803,
+      "RMSE": 7.875,
+      "R2": 0.3142
     },
     "GradientBoostingRegressor": {
-      "MAE": 5.048,
-      "RMSE": 8.119,
-      "R2": 0.2785
+      "MAE": 4.76,
+      "RMSE": 7.821,
+      "R2": 0.3236
+    },
+    "XGBRegressor": {
+      "MAE": 4.745,
+      "RMSE": 7.805,
+      "R2": 0.3263
     }
   },
   "best_metrics": {
-    "MAE": 5.048,
-    "RMSE": 8.119,
-    "R2": 0.2785
+    "MAE": 4.745,
+    "RMSE": 7.805,
+    "R2": 0.3263
   },
   "train_samples": 77176,
   "test_samples": 19294,
@@ -28,13 +33,18 @@
   "features": [
     "seller_state",
     "customer_state",
+    "distance_km",
     "product_weight_g",
     "product_volume_cm3",
+    "product_category",
     "freight_value",
     "price",
+    "freight_ratio",
+    "item_count",
     "primary_payment_type",
+    "num_installments",
     "order_day_of_week",
     "order_month",
-    "num_installments"
+    "seller_avg_delivery"
   ]
 }
